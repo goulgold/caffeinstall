@@ -1,0 +1,179 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi) 
+\usepackage{lipsum} %This package just generates Lorem Ipsum filler text. 
+\usepackage{fullpage} % changes the margin
+\usepackage{hyperref} % usage of hyperlinks
+\hypersetup{linkcolor=blue, colorlinks = true}
+\usepackage{listings} % insert source code
+\usepackage{color}
+\definecolor{backcolor}{rgb}{0.95,0.95,0.92}
+\lstset{
+	language=bash,
+	backgroundcolor=\color{backcolor}
+	}
+
+\begin{document}
+%Header-Make sure you update this information!!!!
+\noindent
+\large\textbf{Caffe Installation Tutorial} \hfill \textbf{Qiming Guo} \\
+\normalsize version: 0.1 \hfill Mar 7. 2015 \\
+
+\section*{Introduction}
+This instruction is about how to install Deep learning framework \emph{Caffe} in Linux environment based Debain distribution version (Ubuntu, etc.).
+All installation steps are implemented in the following environment:
+
+\begin{itemize}
+\item totally clean Xubuntu 14.04 platform with Xfce desktop environment.
+\item Intel qual-core processor without GPU
+\item 4GB memeory
+\end{itemize}
+
+If your environment doesn't look like this, that might cause some slight differences.
+
+
+\section*{Prerequisites}
+Before installation of Caffe, there are plenty of dependencies need to be installed.\cite{caffe1} This section includes all the dependencies' installation instruction. The references are remarked as citations. You could click them to obtain more information. Some of them might need root access. you could use \emph{sudo} command.
+
+\subsection{CUDA}
+
+Because my computer doesn't have a GPU core. So CUDA isn't necessary for CPU only mode. For CPU-only Caffe, uncomment CPU\_ONLY := 1 in Makefile.config.\cite{caffe1}
+
+\subsection{BLAS via ATLAS(version: 3.10.2)}
+
+Caffe requires ATLAS as in the backend of its matrix and vector computations. ATLAS is the default option for Caffe. Therefore I choose to install ATLAS. The source code of ATLAS could be found its Website.\cite{atlas1}
+
+\begin{lstlisting}
+sudo apt-get install libatlas-base-dev
+\end{lstlisting}
+
+\subsection{OpenCV version:2.4.11}
+
+The OpenCV is a open source computer vision package. This package could be installed using \emph{apt-get}.
+
+\begin{lstlisting}
+sudo apt-get install libopencv-dev
+\end{lstlisting}
+
+\subsection{Other dependencies}
+
+Besides the above dependencies, there're still some softwares need to be installed, and most of them could be installed using \emph{apt-get}.
+
+\begin{itemize}
+\item \emph{Boost 1.57.0} \cite{boost1} is a set of extern C++ libraries.
+\item \emph{protobuf 2.5.0} \cite{protobuf} is a tool encoding structured data developed by Google.
+\item \emph{glog 0.3.3} \cite{glog} is a library implements application-level logging developed by Google.
+\item The gflags package contains a library that implements command-line flags processing developed by Google.
+\item HDF5 is a data model library for storing and managing datas.
+\item \emph{leveldb} is a fast and lightweight key/value database library by Google.
+\item \emph{snappy 1.0.2} is compression/decompression library by Google. And it's widely used in Google.
+\item \emph{LMDB} is a lightning memory-mapped database.
+\end{itemize}
+The apt-get command is shown:
+\begin{lstlisting}
+sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev \
+libboost-all-dev libhdf5-serial-dev \	
+libgflags-dev libgoogle-glog-dev liblmdb-dev protobuf-compiler
+\end{lstlisting}
+
+\section{Installation of Caffe}
+
+After all dependencies are installed, we could install Caffe now. The installation is same as instruction in Website\cite{caffe1}
+
+
+\section{Troubleshooting Q\&A}
+
+\subsection{ATLAS Installation problem}
+
+If some errors about ATLAS occur during Caffe installing procedure, we might have to compile and install ATLAS by ourselves. the instruction is described step by step:
+
+We could download source package in ATLAS website.\cite{atlas1} The source code is packaged in tar.bz2 file. We should unzip it into an arbitrary folder, such as \emph{numerics}:
+\begin{lstlisting}
+cd ~/numerics
+bunzip2 -c ~/dload/atlas3.10.2.tar.bz2 | tar xfm -
+mv ATLAS ATLAS3.10
+\end{lstlisting}
+
+Before installing ATLAS, we should turn off CPU throttling to make sure the CPU could work hundred percent. There are two ways to implement this: 1. Turn off "Cool and quiet" in BIOS; 2. Use "/usr/bin/cpufreq-set" to set:
+
+\begin{lstlisting}
+/usr/bin/cpufreq-set -g performance
+\end{lstlisting}
+
+TIPS: If this computer has several cores(very common). We should set all CPU cores work in performance, for example,  my computer has two cores:
+
+\begin{lstlisting}
+   cp /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor \
+      /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
+\end{lstlisting}
+
+Then, we should install a FORTRAN compiler before start installing ATLAS. Using apt-get tool is a good idea. And We also need download \emph{lapack} and use the package location in Installation procedure.
+
+Now, we could install ATLAS. follow the script\cite{atlas2}:
+
+\begin{lstlisting}
+   cd ATLAS3.10		 # enter SRCdir
+   mkdir Linux_C2D64SSE3 # create BLDdir
+   cd Linux_C2D64SSE3 	 # enter BLDdir
+   ../configure -b 64 -D c \
+   -DPentiumCPS=2400 \   # configure command
+   --with-netlib-lapack-tarfile=$TARDIR$/lapack-3.4.1.tgz \
+   -Fa alg '-fPIC -m64'	# compile shared libraries.
+   make build 			# tune & build lib
+   make check			# sanity check correct answer
+   make ptcheck			# sanity check parallel
+   make time			# check if lib is fast
+   make install			# copy libs to install dir
+   cd lib/
+   make shared			# make shared library
+   make ptshard
+   cp *.so /usr/local/atlas/lib #copy lib files into $PREFIX/lib
+\end{lstlisting}
+
+The parameters used in configure are various between different computers. You should modify them based you environment. 
+
+This ATLAS is installed now.
+
+\subsection{gflags Installation problem}
+
+If some errors about gflags occur during Caffe installing procedure, we might install gflags by ourselves.
+
+\begin{lstlisting}
+wget https://github.com/schuhschuh/gflags/archive/master.zip
+unzip master.zip
+cd gflags-master
+mkdir build && cd build
+export CXXFLAGS="-fPIC" && cmake .. && make VERBOSE=1
+make && make install
+\end{lstlisting}
+
+Because gflags has changed its namespace from gflags to google, after installation we might need to modify Caffe source code. We could use vim editor and  substitute all related keywords, such as:
+
+\begin{lstlisting}
+:%s/gflags::/google::/cg
+\end{lstlisting}
+
+\subsection{Shared libraries problem}
+
+Because most open source package add their shared libraries into \emph{/usr/local/lib} instead of \emph{/usr/lib}, therefore we must add this location in library\_path.
+
+\begin{lstlisting}
+sudo shell -c "echo '/usr/local/lib' >> /etc/ld.so.conf"
+sudo ldconfig
+\end{lstlisting}
+
+
+
+
+\begin{thebibliography}{9}
+\bibitem{caffe1} \href{http://caffe.berkeleyvision.org/installation.html}{Caffe Installation Guide}
+\bibitem{atlas1}  \href{http://math-atlas.sourceforge.net}{ATLAS Offical Website}.
+\bibitem{atlas2}  \href{http://math-atlas.sourceforge.net/atlas_install/}{ATLAS Installation Guide}
+\bibitem{opencv} \href{http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html}{OpenCV Installation Instruction}.
+\bibitem{boost1} \href{http://www.boost.org}{Boost Website}
+\bibitem{boost2} \href{http://www.boost.org/doc/libs/1_57_0/more/getting_started/unix-variants.html#easy-build-and-install}{Boost Installation Guide}
+\bibitem{protobuf} \href{https://code.google.com/p/protobuf/}{Protocol buffer Website}
+\bibitem{glog} \href{https://code.google.com/p/google-glog/}{Glog Website}
+\end{thebibliography}
+
+\end{document}
+
